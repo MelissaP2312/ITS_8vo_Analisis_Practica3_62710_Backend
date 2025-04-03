@@ -24,7 +24,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Endpoint para obtener datos del usuario autenticado
     Route::get('/user', [AuthController::class, 'user']);
     
-    // Cerrar sesión
-    
 });
 Route::middleware('auth:sanctum')->post('/auth/logout', [AuthController::class, 'logout']);
