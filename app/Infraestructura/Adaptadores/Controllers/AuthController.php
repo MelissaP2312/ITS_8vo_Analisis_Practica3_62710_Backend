@@ -3,8 +3,8 @@
 namespace App\Infraestructura\Adaptadores\Controllers;
 
 use Illuminate\Routing\Controller as BaseController;
-use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 
@@ -12,21 +12,22 @@ class AuthController extends BaseController
 {
     public function login(Request $request)
     {
-        $request->validate([
+        $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required'
         ]);
 
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Credenciales inválidas'], 401);
+        if (!Auth::attempt($credentials)) {
+            return response()->json([
+                'message' => 'Credenciales inválidas'
+            ], 401);
         }
 
+        $user = Auth::user();
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'data' => [
+            'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email
@@ -52,7 +53,7 @@ class AuthController extends BaseController
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'data' => [
+            'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email
@@ -63,7 +64,16 @@ class AuthController extends BaseController
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
-        return response()->json(['message' => 'Sesión cerrada']);
+        // Revoca todos los tokens del usuario
+        $request->user()->tokens()->delete();
+        
+        return response()->json([
+            'message' => 'Sesión cerrada exitosamente'
+        ]);
+    }
+
+    public function user(Request $request)
+    {
+        return response()->json($request->user());
     }
 }
